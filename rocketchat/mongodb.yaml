@@ -29,57 +29,17 @@ spec:
     spec:
       containers:
         - name: mongodb
-          image: docker.io/bitnami/mongodb:5.0
+          image: mongo:5.0
+          command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
           ports:
             - containerPort: 27017
-          env:
-            - name: MONGODB_REPLICA_SET_MODE
-              valueFrom:
-                secretKeyRef:
-                  name: rocketchat-secrets
-                  key: MONGODB_REPLICA_SET_MODE
-            - name: MONGODB_REPLICA_SET_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: rocketchat-secrets
-                  key: MONGODB_REPLICA_SET_NAME
-            - name: MONGODB_PORT_NUMBER
-              valueFrom:
-                secretKeyRef:
-                  name: rocketchat-secrets
-                  key: MONGODB_PORT_NUMBER
-            - name: MONGODB_INITIAL_PRIMARY_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: rocketchat-secrets
-                  key: MONGODB_INITIAL_PRIMARY_HOST
-            - name: MONGODB_INITIAL_PRIMARY_PORT_NUMBER
-              valueFrom:
-                secretKeyRef:
-                  name: rocketchat-secrets
-                  key: MONGODB_INITIAL_PRIMARY_PORT_NUMBER
-            - name: MONGODB_ADVERTISED_HOSTNAME
-              valueFrom:
-                secretKeyRef:
-                  name: rocketchat-secrets
-                  key: MONGODB_ADVERTISED_HOSTNAME
-            - name: MONGODB_ENABLE_JOURNAL
-              valueFrom:
-                secretKeyRef:
-                  name: rocketchat-secrets
-                  key: MONGODB_ENABLE_JOURNAL
-            - name: ALLOW_EMPTY_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: rocketchat-secrets
-                  key: ALLOW_EMPTY_PASSWORD
           volumeMounts:
             - name: mongodb-data
-              mountPath: /bitnami/mongodb
+              mountPath: /data/db
           livenessProbe:
             exec:
               command:
-                - mongo
+                - mongosh
                 - --eval
                 - db.adminCommand('ping')
             initialDelaySeconds: 30
@@ -89,7 +49,7 @@ spec:
           readinessProbe:
             exec:
               command:
-                - mongo
+                - mongosh
                 - --eval
                 - db.adminCommand('ping')
             initialDelaySeconds: 10

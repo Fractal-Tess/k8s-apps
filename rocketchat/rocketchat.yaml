@@ -33,7 +33,7 @@ spec:
         - name: rocketchat
           image: registry.rocket.chat/rocketchat/rocket.chat:6.9.2
           ports:
-            - containerPort: 3000
+            - containerPort: 3005
           env:
             - name: MONGO_URL
               valueFrom:
@@ -73,7 +73,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /api/info
-              port: 3000
+              port: 3005
             initialDelaySeconds: 60
             periodSeconds: 10
             timeoutSeconds: 5
@@ -81,7 +81,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /api/info
-              port: 3000
+              port: 3005
             initialDelaySeconds: 30
             periodSeconds: 5
             timeoutSeconds: 3
@@ -103,6 +103,6 @@ spec:
   selector:
     app: rocketchat
   ports:
-    - port: 3000
-      targetPort: 3000
+    - port: 3005
+      targetPort: 3005
   type: ClusterIP
