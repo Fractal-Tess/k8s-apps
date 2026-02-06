@@ -1,0 +1,148 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: infisical
+  namespace: infisical
+  labels:
+    app: infisical
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: infisical
+  template:
+    metadata:
+      labels:
+        app: infisical
+    spec:
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.36
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Waiting for PostgreSQL to be ready..."
+              until nc -z postgres 5432; do
+                echo "PostgreSQL is not ready yet. Waiting..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready!"
+        - name: wait-for-redis
+          image: busybox:1.36
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Waiting for Redis to be ready..."
+              until nc -z redis 6379; do
+                echo "Redis is not ready yet. Waiting..."
+                sleep 2
+              done
+              echo "Redis is ready!"
+      containers:
+        - name: backend
+          image: infisical/infisical:v0.146.0-postgres
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SITE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: infisical-secrets
+                  key: SITE_URL
+            - name: NODE_ENV
+              valueFrom:
+                secretKeyRef:
+                  name: infisical-secrets
+                  key: NODE_ENV
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: infisical-secrets
+                  key: ENCRYPTION_KEY
+            - name: AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: infisical-secrets
+                  key: AUTH_SECRET
+            - name: DB_CONNECTION_URI
+              valueFrom:
+                secretKeyRef:
+                  name: infisical-secrets
+                  key: DB_CONNECTION_URI
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: infisical-secrets
+                  key: REDIS_URL
+            - name: SMTP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: infisical-secrets
+                  key: SMTP_HOST
+            - name: SMTP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: infisical-secrets
+                  key: SMTP_USERNAME
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: infisical-secrets
+                  key: SMTP_PASSWORD
+            - name: SMTP_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: infisical-secrets
+                  key: SMTP_PORT
+            - name: SMTP_FROM_ADDRESS
+              valueFrom:
+                secretKeyRef:
+                  name: infisical-secrets
+                  key: SMTP_FROM_ADDRESS
+            - name: SMTP_FROM_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: infisical-secrets
+                  key: SMTP_FROM_NAME
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - wget --no-verbose --tries=1 --spider http://127.0.0.1:8080/api/status || exit 1
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - wget --no-verbose --tries=1 --spider http://127.0.0.1:8080/api/status || exit 1
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: infisical
+  namespace: infisical
+spec:
+  selector:
+    app: infisical
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP

@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: plane-uploads
+  namespace: plane
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plane-minio
+  namespace: plane
+  labels:
+    app: plane-minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: plane-minio
+  template:
+    metadata:
+      labels:
+        app: plane-minio
+    spec:
+      containers:
+        - name: minio
+          image: ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
+          command: ["minio", "server", "/export", "--console-address", ":9090"]
+          ports:
+            - containerPort: 9000
+            - containerPort: 9090
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: plane-secrets
+                  key: MINIO_ROOT_USER
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: plane-secrets
+                  key: MINIO_ROOT_PASSWORD
+          volumeMounts:
+            - name: uploads
+              mountPath: /export
+          livenessProbe:
+            exec:
+              command:
+                - mc
+                - ready
+                - local
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 20
+            failureThreshold: 10
+          readinessProbe:
+            exec:
+              command:
+                - mc
+                - ready
+                - local
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: plane-uploads
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: plane-minio
+  namespace: plane
+spec:
+  selector:
+    app: plane-minio
+  ports:
+    - name: api
+      port: 9000
+      targetPort: 9000
+    - name: console
+      port: 9090
+      targetPort: 9090
+  type: ClusterIP

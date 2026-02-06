@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: space
+  namespace: plane
+  labels:
+    app: space
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: space
+  template:
+    metadata:
+      labels:
+        app: space
+    spec:
+      initContainers:
+        - name: wait-for-api
+          image: busybox:1.36
+          command:
+            - /bin/sh
+            - -c
+            - |
+              until nc -z api 8000; do sleep 2; done
+              until nc -z web 3000; do sleep 2; done
+              sleep 3
+      containers:
+        - name: space
+          image: artifacts.plane.so/makeplane/plane-space:v1.0.0
+          ports:
+            - containerPort: 3000
+          livenessProbe:
+            exec:
+              command:
+                - echo
+                - "hey whats up"
+            initialDelaySeconds: 10
+            periodSeconds: 2
+            timeoutSeconds: 10
+            failureThreshold: 15
+          readinessProbe:
+            exec:
+              command:
+                - echo
+                - "hey whats up"
+            initialDelaySeconds: 5
+            periodSeconds: 2
+            timeoutSeconds: 10
+            failureThreshold: 15
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: space
+  namespace: plane
+spec:
+  selector:
+    app: space
+  ports:
+    - port: 3000
+      targetPort: 3000
+  type: ClusterIP
