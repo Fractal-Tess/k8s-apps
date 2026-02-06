@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rocketchat
+  namespace: rocketchat
+  labels:
+    app: rocketchat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rocketchat
+  template:
+    metadata:
+      labels:
+        app: rocketchat
+    spec:
+      initContainers:
+        - name: wait-for-mongodb
+          image: busybox:1.36
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Waiting for MongoDB to be ready..."
+              until nc -z mongodb 27017; do
+                echo "MongoDB is not ready yet. Waiting..."
+                sleep 2
+              done
+              echo "MongoDB is ready!"
+              sleep 5
+      containers:
+        - name: rocketchat
+          image: registry.rocket.chat/rocketchat/rocket.chat:6.9.2
+          ports:
+            - containerPort: 3000
+          env:
+            - name: MONGO_URL
+              valueFrom:
+                secretKeyRef:
+                  name: rocketchat-secrets
+                  key: MONGO_URL
+            - name: MONGO_OPLOG_URL
+              valueFrom:
+                secretKeyRef:
+                  name: rocketchat-secrets
+                  key: MONGO_OPLOG_URL
+            - name: ROOT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: rocketchat-secrets
+                  key: ROOT_URL
+            - name: PORT
+              valueFrom:
+                secretKeyRef:
+                  name: rocketchat-secrets
+                  key: ROCKETCHAT_PORT
+            - name: DEPLOY_METHOD
+              valueFrom:
+                secretKeyRef:
+                  name: rocketchat-secrets
+                  key: DEPLOY_METHOD
+            - name: DEPLOY_PLATFORM
+              valueFrom:
+                secretKeyRef:
+                  name: rocketchat-secrets
+                  key: DEPLOY_PLATFORM
+            - name: REG_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: rocketchat-secrets
+                  key: REG_TOKEN
+          livenessProbe:
+            httpGet:
+              path: /api/info
+              port: 3000
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: /api/info
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rocketchat
+  namespace: rocketchat
+spec:
+  selector:
+    app: rocketchat
+  ports:
+    - port: 3000
+      targetPort: 3000
+  type: ClusterIP
