@@ -1,64 +1,27 @@
-# ☸️ Kubernetes Deployments
+# Kubernetes Deployments
 
-A collection of Kubernetes manifests for self-hosted applications on k3s.
+Self-hosted applications on k3s.
 
-## 📦 Included Applications
-
-| Application | Description | Namespace |
-|------------|-------------|-----------|
-| 🚀 **RocketChat** | Open-source team chat | `rocketchat` |
-| 🔐 **Infisical** | Secret management platform | `infisical` |
-| ✈️ **Plane** | Open-source project management | `plane` |
-
-## 🚀 Quick Start
-
-Each application has its own directory with a simple deployment script:
-
-```bash
-cd <application-name>
-./deploy.sh
-```
-
-## 📁 Repository Structure
+## Repository Structure
 
 ```
 .
-├── rocketchat/          # RocketChat + MongoDB
-├── infisical/           # Infisical + PostgreSQL + Redis
-└── plane/               # Plane + PostgreSQL + Redis + RabbitMQ + MinIO
+├── rocketchat/          # Team chat application with MongoDB
+├── infisical/           # Secret management with PostgreSQL and Redis
+└── plane/               # Project management with PostgreSQL, Redis, RabbitMQ, and MinIO
 ```
 
-## ⚙️ Pre-Deployment
+## Application Details
 
-Before deploying, update the secrets in each `secrets.yaml`:
+### rocketchat/
+Contains Kubernetes manifests for deploying RocketChat (team chat platform) with MongoDB database and replica set configuration.
 
-```bash
-# Edit secrets
-vim <app>/secrets.yaml
+### infisical/
+Contains manifests for Infisical secret management platform with PostgreSQL database, Redis cache, and Let's Encrypt SSL certificate configuration.
 
-# Look for placeholders like:
-# <CHANGE_ME_*>
-# And replace with actual values
-```
-
-## 🏗️ Prerequisites
-
-- k3s cluster running
-- kubectl configured
-- cert-manager (for Infisical SSL)
-- ingress-nginx
-
-## 📖 Application Details
-
-### RocketChat
-Team communication platform with MongoDB replica set.
-
-### Infisical
-Secret management with HTTPS via Let's Encrypt.
-
-### Plane
-Project management tool with full backend stack.
+### plane/
+Contains manifests for Plane project management tool with PostgreSQL database, Redis, RabbitMQ message broker, and MinIO object storage.
 
 ---
 
-💡 **Tip**: Check each application's README for specific configuration options.
+**Prerequisites:** k3s cluster, kubectl, cert-manager, ingress-nginx
