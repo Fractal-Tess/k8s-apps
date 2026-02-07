@@ -39,22 +39,17 @@ kubectl apply -f secrets.yaml
 echo -e "${GREEN}✓ Secrets created${NC}"
 echo ""
 
-echo "Step 3: Creating ClusterIssuer for Let's Encrypt..."
-kubectl apply -f cluster-issuer.yaml
-echo -e "${GREEN}✓ ClusterIssuer created${NC}"
-echo ""
-
-echo "Step 4: Deploying PostgreSQL..."
+echo "Step 3: Deploying PostgreSQL..."
 kubectl apply -f postgres.yaml
 echo -e "${GREEN}✓ PostgreSQL deployment started${NC}"
 echo ""
 
-echo "Step 5: Deploying Redis..."
+echo "Step 4: Deploying Redis..."
 kubectl apply -f redis.yaml
 echo -e "${GREEN}✓ Redis deployment started${NC}"
 echo ""
 
-echo "Step 6: Waiting for databases to be ready..."
+echo "Step 5: Waiting for databases to be ready..."
 echo -e "${YELLOW}  Waiting for PostgreSQL...${NC}"
 kubectl wait --for=condition=ready pod -l app=postgres -n infisical --timeout=120s
 echo -e "${GREEN}  ✓ PostgreSQL is ready${NC}"
@@ -64,17 +59,17 @@ kubectl wait --for=condition=ready pod -l app=redis -n infisical --timeout=120s
 echo -e "${GREEN}  ✓ Redis is ready${NC}"
 echo ""
 
-echo "Step 7: Deploying Infisical backend..."
+echo "Step 6: Deploying Infisical backend..."
 kubectl apply -f infisical.yaml
 echo -e "${GREEN}✓ Infisical deployment started${NC}"
 echo ""
 
-echo "Step 8: Creating Ingress..."
+echo "Step 7: Creating Ingress..."
 kubectl apply -f ingress.yaml
 echo -e "${GREEN}✓ Ingress created${NC}"
 echo ""
 
-echo "Step 9: Waiting for Infisical to be ready..."
+echo "Step 8: Waiting for Infisical to be ready..."
 echo -e "${YELLOW}  This may take a few minutes...${NC}"
 if kubectl wait --for=condition=ready pod -l app=infisical -n infisical --timeout=300s; then
     echo -e "${GREEN}  ✓ Infisical is ready${NC}"
@@ -88,14 +83,15 @@ echo -e "${GREEN}Deployment Complete!${NC}"
 echo "==================================="
 echo ""
 echo "Infisical should be available at:"
-echo "  https://infisical.fractal-tess.xyz"
+echo "  http://infisical.local"
+echo ""
+echo "Or via port-forward:"
+echo "  kubectl port-forward -n infisical svc/infisical 8080:8080"
+echo "  http://localhost:8080"
 echo ""
 echo "Useful commands:"
 echo "  - Check pods: kubectl get pods -n infisical"
 echo "  - Check logs: kubectl logs -n infisical deployment/infisical"
 echo "  - Check ingress: kubectl get ingress -n infisical"
 echo "  - Get all resources: kubectl get all -n infisical"
-echo ""
-echo "Note: SSL certificate may take a few minutes to be issued."
-echo "      Check status with: kubectl get certificate -n infisical"
 echo ""

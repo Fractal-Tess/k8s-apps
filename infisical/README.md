@@ -8,7 +8,7 @@ This directory contains Kubernetes manifests to deploy Infisical with PostgreSQL
 - **PostgreSQL**: Database for Infisical data
 - **Redis**: Cache and session storage
 - **Infisical**: Main application backend
-- **Ingress**: HTTPS access via infisical.fractal-tess.xyz
+- **Ingress**: HTTP access via infisical.local
 
 ## Files
 
@@ -19,8 +19,7 @@ This directory contains Kubernetes manifests to deploy Infisical with PostgreSQL
 | `postgres.yaml` | PostgreSQL deployment with persistent storage |
 | `redis.yaml` | Redis deployment |
 | `infisical.yaml` | Infisical backend deployment |
-| `cluster-issuer.yaml` | Let's Encrypt certificate issuer |
-| `ingress.yaml` | Ingress with SSL/TLS configuration |
+| `ingress.yaml` | Ingress configuration |
 | `deploy.sh` | Automated deployment script |
 
 ## Prerequisites
@@ -28,7 +27,7 @@ This directory contains Kubernetes manifests to deploy Infisical with PostgreSQL
 1. k3s must be installed and running (configured in NixOS)
 2. kubectl configured to access the cluster
 3. ingress-nginx installed (automatically installed by k3s-post-setup)
-4. cert-manager installed (automatically installed by k3s-post-setup)
+
 
 ## Deployment
 
@@ -48,9 +47,6 @@ kubectl apply -f namespace.yaml
 # Create secrets
 kubectl apply -f secrets.yaml
 
-# Create ClusterIssuer
-kubectl apply -f cluster-issuer.yaml
-
 # Deploy databases
 kubectl apply -f postgres.yaml
 kubectl apply -f redis.yaml
@@ -69,7 +65,13 @@ kubectl apply -f ingress.yaml
 ## Access
 
 After deployment, Infisical will be available at:
-- **URL**: https://infisical.fractal-tess.xyz
+- **URL**: http://infisical.local
+
+Or via port-forward:
+```bash
+kubectl port-forward -n infisical svc/infisical 8080:8080
+```
+Then open: http://localhost:8080
 
 ## Monitoring
 
@@ -88,8 +90,7 @@ kubectl logs -n infisical deployment/redis
 # Check ingress
 kubectl get ingress -n infisical
 
-# Check certificate status
-kubectl get certificate -n infisical
+
 ```
 
 ## Secrets
@@ -107,14 +108,6 @@ All sensitive data is stored in `secrets.yaml`. To update secrets:
 kubectl describe pod -n infisical <pod-name>
 ```
 
-### SSL certificate not issued
-```bash
-kubectl describe certificate -n infisical
-kubectl describe certificaterequest -n infisical
-kubectl describe order -n infisical
-kubectl describe challenge -n infisical
-```
-
 ### Database connection issues
 ```bash
 kubectl logs -n infisical deployment/infisical | grep -i error
@@ -123,5 +116,4 @@ kubectl logs -n infisical deployment/infisical | grep -i error
 ## Notes
 
 - The initial deployment may take 5-10 minutes for all services to be ready
-- SSL certificate issuance may take a few minutes
 - SMTP is configured but password is empty - update in secrets.yaml to enable email

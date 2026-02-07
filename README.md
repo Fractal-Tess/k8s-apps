@@ -17,11 +17,11 @@ Self-hosted applications on k3s.
 Contains Kubernetes manifests for deploying RocketChat (team chat platform) with MongoDB database and replica set configuration.
 
 ### infisical/
-Contains manifests for Infisical secret management platform with PostgreSQL database, Redis cache, and Let's Encrypt SSL certificate configuration.
+Contains manifests for Infisical secret management platform with PostgreSQL database and Redis cache.
 
 ### plane/
 Contains manifests for Plane project management tool with PostgreSQL database, Redis, RabbitMQ message broker, and MinIO object storage.
 
 ---
 
-**Prerequisites:** k3s cluster, kubectl, cert-manager, ingress-nginx
+**Prerequisites:** k3s cluster, kubectl, ingress-nginx
